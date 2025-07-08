@@ -34,7 +34,7 @@ def paginate_users(page_size, offset):
         cursor = connection.cursor(dictionary=True)
         
         # Fetch users with LIMIT and OFFSET
-        query = "SELECT user_id, name, email, age FROM user_data LIMIT %s OFFSET %s"
+        query = "SELECT * FROM user_data LIMIT %s OFFSET %s"
         cursor.execute(query, (page_size, offset))
         
         return cursor.fetchall()
