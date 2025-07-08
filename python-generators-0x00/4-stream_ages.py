@@ -51,16 +51,14 @@ def paginate_users(page_size, offset):
         if connection and connection.is_connected():
             connection.close()
 
-def stream_user_ages(page_size=100):
+def stream_user_ages():
     """
     Generator that yields user ages one by one from the database.
     
-    Args:
-        page_size (int): Number of users to fetch per database query
-        
     Yields:
         float: Individual user age
     """
+    page_size = 100
     offset = 0
     
     # Loop 1: Iterate through pages
