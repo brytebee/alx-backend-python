@@ -1,54 +1,76 @@
-# First, let's understand the utils.access_nested_map function
-# This function likely takes a nested dictionary and a path (tuple of keys)
-# and returns the value at that path
+#!/usr/bin/env python3
 
-def access_nested_map(nested_map, path):
+"""Generic utilities for github org client.
+"""
+import requests
+from functools import wraps
+from typing import (
+    Mapping,
+    Sequence,
+    Any,
+    Dict,
+    Callable,
+)
+
+__all__ = [
+    "access_nested_map",
+    "get_json",
+    "memoize",
+]
+
+
+def access_nested_map(nested_map: Mapping, path: Sequence) -> Any:
+    """Access nested map with key path.
+    Parameters
+    ----------
+    nested_map: Mapping
+        A nested map
+    path: Sequence
+        a sequence of key representing a path to the value
+    Example
+    -------
+    >>> nested_map = {"a": {"b": {"c": 1}}}
+    >>> access_nested_map(nested_map, ["a", "b", "c"])
+    1
     """
-    Access a nested map using a sequence of keys.
-    
-    Args:
-        nested_map: A nested dictionary
-        path: A tuple of keys representing the path to the desired value
-        
-    Returns:
-        The value at the specified path in the nested map
-    """
-    result = nested_map
     for key in path:
-        result = result[key]
-    return result
+        if not isinstance(nested_map, Mapping):
+            raise KeyError(key)
+        nested_map = nested_map[key]
 
-# Let's test this function with the given examples:
-print("Testing access_nested_map function:")
+    return nested_map
 
-# Test 1: nested_map={"a": 1}, path=("a",)
-test1 = access_nested_map({"a": 1}, ("a",))
-print(f"Test 1 result: {test1}")  # Expected: 1
 
-# Test 2: nested_map={"a": {"b": 2}}, path=("a",)
-test2 = access_nested_map({"a": {"b": 2}}, ("a",))
-print(f"Test 2 result: {test2}")  # Expected: {"b": 2}
+def get_json(url: str) -> Dict:
+    """Get JSON from remote URL.
+    """
+    response = requests.get(url)
+    return response.json()
 
-# Test 3: nested_map={"a": {"b": 2}}, path=("a", "b")
-test3 = access_nested_map({"a": {"b": 2}}, ("a", "b"))
-print(f"Test 3 result: {test3}")  # Expected: 2
 
-print("\nNow creating the unit test class:")
+def memoize(fn: Callable) -> Callable:
+    """Decorator to memoize a method.
+    Example
+    -------
+    class MyClass:
+        @memoize
+        def a_method(self):
+            print("a_method called")
+            return 42
+    >>> my_object = MyClass()
+    >>> my_object.a_method
+    a_method called
+    42
+    >>> my_object.a_method
+    42
+    """
+    attr_name = "_{}".format(fn.__name__)
 
-import unittest
-from parameterized import parameterized
+    @wraps(fn)
+    def memoized(self):
+        """"memoized wraps"""
+        if not hasattr(self, attr_name):
+            setattr(self, attr_name, fn(self))
+        return getattr(self, attr_name)
 
-class TestAccessNestedMap(unittest.TestCase):
-    
-    @parameterized.expand([
-        ({"a": 1}, ("a",), 1),
-        ({"a": {"b": 2}}, ("a",), {"b": 2}),
-        ({"a": {"b": 2}}, ("a", "b"), 2),
-    ])
-    def test_access_nested_map(self, nested_map, path, expected):
-        """Test that access_nested_map returns the expected result."""
-        self.assertEqual(access_nested_map(nested_map, path), expected)
-
-# Example of how to run the tests
-if __name__ == '__main__':
-    unittest.main()
+    return property(memoized)
