@@ -144,6 +144,20 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
         """Stop the request patcher."""
         cls.get_patcher.stop()
 
+    def test_public_repos(self):
+        """Test that public_repos returns expected list of repos from
+        fixtures."""
+        client = GithubOrgClient("google")
+        result = client.public_repos()
+        self.assertEqual(result, self.expected_repos)
+
+    def test_public_repos_with_license(self):
+        """Test that public_repos with license filter returns expected
+        apache-2.0 repos from fixtures."""
+        client = GithubOrgClient("google")
+        result = client.public_repos(license="apache-2.0")
+        self.assertEqual(result, self.apache2_repos)
+
 
 if __name__ == '__main__':
     unittest.main()
