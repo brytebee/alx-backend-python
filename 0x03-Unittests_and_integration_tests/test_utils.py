@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""
-Unit tests for the utils module access_nested_map function.
-This module contains test cases to verify the correct behavior
-of accessing nested dictionary structures using key paths.
-"""
 
 import sys
 import os
 import unittest
 from unittest.mock import patch, Mock
 from parameterized import parameterized
+
+"""
+Unit tests for the utils module access_nested_map function.
+This module contains test cases to verify the correct behavior
+of accessing nested dictionary structures using key paths.
+"""
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utils import access_nested_map, get_json
