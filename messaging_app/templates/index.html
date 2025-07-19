@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messaging API Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+
+        .auth-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        .auth-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .auth-form {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+        }
+
+        label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        input[type="text"], input[type="email"], input[type="password"], input[type="url"], textarea, select {
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(52, 152, 219, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-5px);
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .endpoint-list {
+            list-style: none;
+        }
+
+        .endpoint-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+            transition: all 0.3s ease;
+        }
+
+        .endpoint-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .method {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 10px;
+            color: white;
+        }
+
+        .get { background: #27ae60; }
+        .post { background: #e74c3c; }
+        .put { background: #f39c12; }
+        .patch { background: #9b59b6; }
+        .delete { background: #e67e22; }
+
+        .endpoint-url {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .endpoint-desc {
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        .test-section {
+            grid-column: 1 / -1;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-form {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .response-section {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            min-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .status-success { color: #27ae60; }
+        .status-error { color: #e74c3c; }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .test-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .auth-form {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Messaging API Dashboard</h1>
+            <p>Interactive interface for exploring and testing your messaging API endpoints</p>
+        </div>
+
+        <div class="auth-section">
+            <h2>🔐 API Configuration</h2>
+            <div class="auth-form">
+                <div class="form-group">
+                    <label for="baseUrl">Base URL:</label>
+                    <input type="url" id="baseUrl" value="http://localhost:8000/api/v1/" placeholder="http://localhost:8000/api/v1/">
+                </div>
+                <div class="form-group">
+                    <label for="authToken">Auth Token:</label>
+                    <input type="text" id="authToken" placeholder="Bearer token (optional)">
+                </div>
+                <button onclick="testConnection()">Test Connection</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="section">
+                <h2>💬 Conversation Endpoints</h2>
+                <ul class="endpoint-list">
+                    <li class="endpoint-item">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-url">/conversations/</span>
+                        <div class="endpoint-desc">List all conversations for authenticated user</div>
+                    </li>
+                    <li class="endpoint-item">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-url">/conversations/</span>
+                        <div class="endpoint-desc">Create a new conversation</div>
+                    </li>
+                    <li class="endpoint-item">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-url">/conversations/{id}/</span>
+                        <div class="endpoint-desc">Get conversation details with messages</div>
+                    </li>
+                    <li class="endpoint-item">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-url">/conversations/{id}/mark_all_read/</span>
+                        <div class="endpoint-desc">Mark all messages in conversation as read</div>
+                    </li>
+                    <li class="endpoint-item">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-url">/conversations/{id}/leave/</span>
+                        <div class="endpoint-desc">Leave a conversation</div>
+                    </li>
+                    <li class="endpoint-item">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-url">/conversations/{id}/add_participant/</span>
+                        <div class="endpoint-desc">Add participant to conversation</div>
+                    </li>
+                    <li class="endpoint-item">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-url">/conversations/stats/</span>
+                        <div class="endpoint-desc">Get conversation statistics</div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>📨 Message Endpoints</h2>
+                <ul class="endpoint-list">
+                    <li class="endpoint-item">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-url">/messages/</span>
+                        <div class="endpoint-desc">List messages (optionally filter by conversation)</div>
+                    </li>
+                    <li class="endpoint-item">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-url">/messages/</span>
+                        <div class="endpoint-desc">Send a new message</div>
+                    </li>
+                    <li class="endpoint-item">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-url">/messages/{id}/</span>
+                        <div class="endpoint-desc">Get specific message details</div>
+                    </li>
+                    <li class="endpoint-item">
+                        <span class="method put">PUT</span>
+                        <span class="endpoint-url">/messages/{id}/</span>
+                        <div class="endpoint-desc">Update a message (sender only)</div>
+                    </li>
+                    <li class="endpoint-item">
+                        <span class="method delete">DELETE</span>
+                        <span class="endpoint-url">/messages/{id}/</span>
+                        <div class="endpoint-desc">Delete a message (sender only)</div>
+                    </li>
+                    <li class="endpoint-item">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-url">/messages/{id}/mark_read/</span>
+                        <div class="endpoint-desc">Mark specific message as read</div>
+                    </li>
+                    <li class="endpoint-item">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-url">/messages/mark_multiple_read/</span>
+                        <div class="endpoint-desc">Mark multiple messages as read</div>
+                    </li>
+                    <li class="endpoint-item">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-url">/messages/unread/</span>
+                        <div class="endpoint-desc">Get all unread messages</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 API Tester</h2>
+            <div class="test-form">
+                <div>
+                    <div class="form-group">
+                        <label for="testMethod">Method:</label>
+                        <select id="testMethod">
+                            <option value="GET">GET</option>
+                            <option value="POST">POST</option>
+                            <option value="PUT">PUT</option>
+                            <option value="PATCH">PATCH</option>
+                            <option value="DELETE">DELETE</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="testEndpoint">Endpoint:</label>
+                        <input type="text" id="testEndpoint" placeholder="conversations/" value="conversations/">
+                    </div>
+                    <div class="form-group">
+                        <label for="testData">Request Body (JSON):</label>
+                        <textarea id="testData" rows="8" placeholder='{"participant_ids": ["user-uuid-1", "user-uuid-2"]}'></textarea>
+                    </div>
+                    <button onclick="makeRequest()" id="testButton">Send Request</button>
+                </div>
+                <div>
+                    <h3>Response:</h3>
+                    <div id="response" class="response-section">Click "Send Request" to test an endpoint...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let baseUrl = 'http://localhost:8000/api/v1/';
+        let authToken = '';
+
+        // Update configuration
+        document.getElementById('baseUrl').addEventListener('input', function() {
+            baseUrl = this.value;
+        });
+
+        document.getElementById('authToken').addEventListener('input', function() {
+            authToken = this.value;
+        });
+
+        // Test connection
+        async function testConnection() {
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = 'Testing...';
+            button.disabled = true;
+
+            try {
+                const headers = {
+                    'Content-Type': 'application/json',
+                };
+
+                if (authToken) {
+                    headers['Authorization'] = `Bearer ${authToken}`;
+                }
+
+                const response = await fetch(baseUrl + 'conversations/', {
+                    method: 'GET',
+                    headers: headers
+                });
+
+                if (response.ok) {
+                    alert('✅ Connection successful!');
+                } else {
+                    alert(`❌ Connection failed: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                alert(`❌ Connection error: ${error.message}`);
+            } finally {
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        }
+
+        // Make API request
+        async function makeRequest() {
+            const method = document.getElementById('testMethod').value;
+            const endpoint = document.getElementById('testEndpoint').value;
+            const data = document.getElementById('testData').value;
+            const responseDiv = document.getElementById('response');
+            const button = document.getElementById('testButton');
+
+            // UI feedback
+            button.textContent = 'Sending...';
+            button.disabled = true;
+            responseDiv.className = 'response-section loading';
+
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+
+            const requestOptions = {
+                method: method,
+                headers: headers,
+            };
+
+            // Add body for POST, PUT, PATCH requests
+            if (['POST', 'PUT', 'PATCH'].includes(method) && data.trim()) {
+                try {
+                    requestOptions.body = JSON.stringify(JSON.parse(data));
+                } catch (error) {
+                    responseDiv.innerHTML = `❌ Invalid JSON in request body: ${error.message}`;
+                    responseDiv.className = 'response-section status-error';
+                    button.textContent = 'Send Request';
+                    button.disabled = false;
+                    return;
+                }
+            }
+
+            try {
+                const url = baseUrl + endpoint.replace(/^\//, '');
+                const startTime = Date.now();
+                
+                const response = await fetch(url, requestOptions);
+                const endTime = Date.now();
+                
+                const responseText = await response.text();
+                let responseData;
+                
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch {
+                    responseData = responseText;
+                }
+
+                // Format response
+                const statusClass = response.ok ? 'status-success' : 'status-error';
+                const statusIcon = response.ok ? '✅' : '❌';
+                
+                responseDiv.innerHTML = `${statusIcon} Status: ${response.status} ${response.statusText}
+Time: ${endTime - startTime}ms
+URL: ${url}
+
+Response:
+${JSON.stringify(responseData, null, 2)}`;
+                
+                responseDiv.className = `response-section ${statusClass}`;
+                
+            } catch (error) {
+                responseDiv.innerHTML = `❌ Network Error: ${error.message}`;
+                responseDiv.className = 'response-section status-error';
+            } finally {
+                button.textContent = 'Send Request';
+                button.disabled = false;
+            }
+        }
+
+        // Pre-fill common requests
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click handlers for endpoint items
+            document.querySelectorAll('.endpoint-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const method = this.querySelector('.method').textContent;
+                    const url = this.querySelector('.endpoint-url').textContent;
+                    
+                    document.getElementById('testMethod').value = method;
+                    document.getElementById('testEndpoint').value = url.replace(/^\//, '');
+                    
+                    // Pre-fill common request bodies
+                    const testData = document.getElementById('testData');
+                    if (method === 'POST' && url.includes('/conversations/')) {
+                        if (url === '/conversations/') {
+                            testData.value = JSON.stringify({
+                                "participant_ids": ["user-uuid-1", "user-uuid-2"]
+                            }, null, 2);
+                        } else if (url.includes('add_participant')) {
+                            testData.value = JSON.stringify({
+                                "user_id": "user-uuid-here"
+                            }, null, 2);
+                        }
+                    } else if (method === 'POST' && url === '/messages/') {
+                        testData.value = JSON.stringify({
+                            "conversation": "conversation-uuid-here",
+                            "message_body": "Hello, this is a test message!"
+                        }, null, 2);
+                    } else if (method === 'POST' && url.includes('mark_multiple_read')) {
+                        testData.value = JSON.stringify({
+                            "message_ids": ["message-uuid-1", "message-uuid-2"]
+                        }, null, 2);
+                    } else {
+                        testData.value = '';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
