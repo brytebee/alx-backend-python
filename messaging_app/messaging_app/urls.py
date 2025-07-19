@@ -10,6 +10,9 @@ from django.http import JsonResponse
 urlpatterns = [
     path('admin/', admin.site.urls),
     
+    # API authentication (for DRF browsable API)
+    path('api-auth/', include('rest_framework.urls')),
+    
     # API v1 routes
     path('api/v1/', include('chats.urls')),
     

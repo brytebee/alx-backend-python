@@ -7,7 +7,7 @@ from .views import ConversationViewSet, MessageViewSet
 from .auth_urls import auth_urlpatterns
 
 # Create main router
-router = DefaultRouter()
+router = routers.DefaultRouter()
 router.register(r'conversations', ConversationViewSet, basename='conversation')
 router.register(r'messages', MessageViewSet, basename='message')
 

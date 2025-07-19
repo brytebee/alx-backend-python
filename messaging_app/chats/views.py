@@ -1,11 +1,12 @@
-# Updated chats/views.py with enhanced permissions
-from rest_framework import viewsets, status
+# chats/views.py
+from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Count, Q, Exists, OuterRef
 from django.utils import timezone
 from datetime import timedelta
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import User, Conversation, ConversationParticipant, Message, MessageReadReceipt
 from .serializers import (
@@ -20,9 +21,14 @@ from .permissions import (
 
 class ConversationViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for managing conversations with enhanced permissions
+    ViewSet for managing conversations with enhanced permissions and filters
     """
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['conversation_type', 'created_at']
+    search_fields = ['title']
+    ordering_fields = ['created_at', 'updated_at']
+    ordering = ['-created_at']
     
     def get_queryset(self):
         """Return conversations where current user is a participant"""
@@ -231,9 +237,14 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
 class MessageViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for managing messages with enhanced permissions
+    ViewSet for managing messages with enhanced permissions and filters
     """
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['conversation', 'sender', 'sent_at', 'message_type']
+    search_fields = ['content']
+    ordering_fields = ['sent_at', 'edited_at']
+    ordering = ['-sent_at']
     
     def get_queryset(self):
         """Return messages from conversations where current user is a participant"""
