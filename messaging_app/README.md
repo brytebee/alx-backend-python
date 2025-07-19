@@ -11,7 +11,7 @@ A Django REST API for real-time messaging with role-based permissions.
 - Real-time messaging capability
 
 ## API Documentation UI
-
+<img width="1906" height="964" alt="image" src="https://github.com/user-attachments/assets/611c45ce-1e43-4d15-be5f-882b25775988" />
 
 ## Quick Start
 
