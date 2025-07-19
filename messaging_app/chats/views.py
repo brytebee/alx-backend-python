@@ -1,3 +1,4 @@
+# Updated chats/views.py with enhanced permissions
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -12,11 +13,14 @@ from .serializers import (
     MessageSerializer, MessageCreateSerializer, MessageReadReceiptCreateSerializer,
     BulkMessageReadSerializer, ConversationStatsSerializer
 )
+from .permissions import (
+    IsConversationParticipant, IsMessageSender, IsAdminOrHost
+)
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for managing conversations
+    ViewSet for managing conversations with enhanced permissions
     """
     permission_classes = [IsAuthenticated]
     
@@ -38,6 +42,22 @@ class ConversationViewSet(viewsets.ModelViewSet):
             return ConversationListSerializer
         else:
             return ConversationDetailSerializer
+    
+    def get_permissions(self):
+        """
+        Instantiate and return the list of permissions required for this view.
+        """
+        if self.action in ['retrieve', 'update', 'partial_update', 'mark_all_read', 'leave']:
+            # Only participants can access specific conversation
+            permission_classes = [IsAuthenticated, IsConversationParticipant]
+        elif self.action == 'add_participant':
+            # Only admin or host can add participants to any conversation
+            # Or participants can add to their own conversations
+            permission_classes = [IsAuthenticated]  # Custom logic in the action
+        else:
+            permission_classes = [IsAuthenticated]
+        
+        return [permission() for permission in permission_classes]
     
     def create(self, request, *args, **kwargs):
         """Create a new conversation"""
@@ -150,6 +170,17 @@ class ConversationViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Check permissions - admin/host can add to any conversation,
+        # participants can add to their own conversations
+        is_participant = conversation.participants.filter(user_id=request.user.user_id).exists()
+        is_admin_or_host = request.user.role in ['admin', 'host']
+        
+        if not (is_participant or is_admin_or_host):
+            return Response(
+                {'error': 'You do not have permission to add participants to this conversation'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
         try:
             user_to_add = User.objects.get(user_id=user_id)
             
@@ -179,11 +210,28 @@ class ConversationViewSet(viewsets.ModelViewSet):
                 {'error': 'User not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated, IsAdminOrHost])
+    def all_conversations(self, request):
+        """Admin and Host can view all conversations"""
+        all_conversations = Conversation.objects.all().prefetch_related(
+            'participants',
+            'messages__sender'
+        ).order_by('-created_at')
+        
+        # Apply pagination
+        page = self.paginate_queryset(all_conversations)
+        if page is not None:
+            serializer = ConversationListSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = ConversationListSerializer(all_conversations, many=True, context={'request': request})
+        return Response(serializer.data)
 
 
 class MessageViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for managing messages
+    ViewSet for managing messages with enhanced permissions
     """
     permission_classes = [IsAuthenticated]
     
@@ -207,6 +255,21 @@ class MessageViewSet(viewsets.ModelViewSet):
             return MessageCreateSerializer
         else:
             return MessageSerializer
+    
+    def get_permissions(self):
+        """
+        Instantiate and return the list of permissions required for this view.
+        """
+        if self.action in ['update', 'partial_update', 'destroy']:
+            # Only message sender can edit/delete
+            permission_classes = [IsAuthenticated, IsMessageSender]
+        elif self.action == 'all_messages':
+            # Only admin and host can view all messages
+            permission_classes = [IsAuthenticated, IsAdminOrHost]
+        else:
+            permission_classes = [IsAuthenticated]
+        
+        return [permission() for permission in permission_classes]
     
     def create(self, request, *args, **kwargs):
         """Send a new message"""
@@ -239,30 +302,10 @@ class MessageViewSet(viewsets.ModelViewSet):
         """Update a message (only sender can edit)"""
         message = self.get_object()
         
-        # Only sender can edit their message
-        if message.sender != request.user:
-            return Response(
-                {'error': 'You can only edit your own messages'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
         # Update edited_at timestamp
         message.edited_at = timezone.now()
         
         return super().update(request, *args, **kwargs)
-    
-    def destroy(self, request, *args, **kwargs):
-        """Delete a message (only sender can delete)"""
-        message = self.get_object()
-        
-        # Only sender can delete their message
-        if message.sender != request.user:
-            return Response(
-                {'error': 'You can only delete your own messages'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        return super().destroy(request, *args, **kwargs)
     
     @action(detail=True, methods=['post'])
     def mark_read(self, request, pk=None):
@@ -307,26 +350,200 @@ class MessageViewSet(viewsets.ModelViewSet):
         # Apply pagination
         page = self.paginate_queryset(unread_messages)
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
+            serializer = self.get_serializer(page, many=True, context={'request': request})
             return self.get_paginated_response(serializer.data)
         
-        serializer = self.get_serializer(unread_messages, many=True)
+        serializer = self.get_serializer(unread_messages, many=True, context={'request': request})
         return Response(serializer.data)
     
-    def list(self, request, *args, **kwargs):
-        """List messages with optional conversation filtering"""
-        queryset = self.get_queryset()
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated, IsAdminOrHost])
+    def all_messages(self, request):
+        """Admin and Host can view all messages"""
+        all_messages = Message.objects.all().select_related(
+            'sender', 'conversation'
+        ).prefetch_related(
+            'read_receipts__user'
+        ).order_by('-sent_at')
         
-        # Filter by conversation if provided
-        conversation_id = request.query_params.get('conversation', None)
+        # Apply filtering by conversation if provided
+        conversation_id = request.query_params.get('conversation_id')
         if conversation_id:
-            queryset = queryset.filter(conversation__conversation_id=conversation_id)
+            all_messages = all_messages.filter(conversation__conversation_id=conversation_id)
+        
+        # Apply date filtering
+        from_date = request.query_params.get('from_date')
+        to_date = request.query_params.get('to_date')
+        if from_date:
+            try:
+                from_date_parsed = timezone.datetime.fromisoformat(from_date.replace('Z', '+00:00'))
+                all_messages = all_messages.filter(sent_at__gte=from_date_parsed)
+            except ValueError:
+                return Response(
+                    {'error': 'Invalid from_date format. Use ISO format.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        if to_date:
+            try:
+                to_date_parsed = timezone.datetime.fromisoformat(to_date.replace('Z', '+00:00'))
+                all_messages = all_messages.filter(sent_at__lte=to_date_parsed)
+            except ValueError:
+                return Response(
+                    {'error': 'Invalid to_date format. Use ISO format.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # Apply sender filtering
+        sender_id = request.query_params.get('sender_id')
+        if sender_id:
+            all_messages = all_messages.filter(sender__user_id=sender_id)
+        
+        # Apply search filtering
+        search = request.query_params.get('search')
+        if search:
+            all_messages = all_messages.filter(content__icontains=search)
         
         # Apply pagination
-        page = self.paginate_queryset(queryset)
+        page = self.paginate_queryset(all_messages)
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
+            serializer = MessageSerializer(page, many=True, context={'request': request})
             return self.get_paginated_response(serializer.data)
         
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = MessageSerializer(all_messages, many=True, context={'request': request})
         return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def search(self, request):
+        """Search messages in user's conversations"""
+        query = request.query_params.get('q', '').strip()
+        if not query:
+            return Response(
+                {'error': 'Search query (q) parameter is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Search in user's accessible messages
+        messages = self.get_queryset().filter(
+            content__icontains=query
+        )
+        
+        # Apply conversation filtering if specified
+        conversation_id = request.query_params.get('conversation_id')
+        if conversation_id:
+            messages = messages.filter(conversation__conversation_id=conversation_id)
+        
+        # Apply pagination
+        page = self.paginate_queryset(messages)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(messages, many=True, context={'request': request})
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def recent(self, request):
+        """Get recent messages from user's conversations"""
+        # Get messages from last 7 days by default
+        days = int(request.query_params.get('days', 7))
+        since = timezone.now() - timedelta(days=days)
+        
+        recent_messages = self.get_queryset().filter(sent_at__gte=since)
+        
+        # Apply pagination
+        page = self.paginate_queryset(recent_messages)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(recent_messages, many=True, context={'request': request})
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'])
+    def read_receipts(self, request, pk=None):
+        """Get read receipts for a specific message"""
+        message = self.get_object()
+        
+        # Verify user can access this message
+        if not message.conversation.participants.filter(user_id=request.user.user_id).exists():
+            return Response(
+                {'error': 'You do not have permission to view this message'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        receipts = message.read_receipts.select_related('user').all()
+        
+        receipt_data = []
+        for receipt in receipts:
+            receipt_data.append({
+                'user_id': receipt.user.user_id,
+                'user_name': receipt.user.full_name,
+                'read_at': receipt.read_at
+            })
+        
+        return Response({
+            'message_id': message.message_id,
+            'read_by': receipt_data,
+            'total_reads': len(receipt_data)
+        })
+
+
+# Helper mixin for nested message viewset
+class NestedMessageViewSet(MessageViewSet):
+    """
+    ViewSet for messages nested under conversations
+    """
+    
+    def get_queryset(self):
+        """Return messages from a specific conversation where user is a participant"""
+        conversation_pk = self.kwargs.get('conversation_pk')
+        
+        # Verify user is participant in the conversation
+        if not Conversation.objects.filter(
+            pk=conversation_pk,
+            participants=self.request.user
+        ).exists():
+            return Message.objects.none()
+        
+        return Message.objects.filter(
+            conversation_id=conversation_pk
+        ).select_related(
+            'sender', 'conversation'
+        ).prefetch_related(
+            'read_receipts__user'
+        ).order_by('-sent_at')
+    
+    def create(self, request, *args, **kwargs):
+        """Send a new message in a specific conversation"""
+        conversation_pk = self.kwargs.get('conversation_pk')
+        
+        # Verify conversation exists and user is participant
+        try:
+            conversation = Conversation.objects.get(pk=conversation_pk)
+            if not conversation.participants.filter(user_id=request.user.user_id).exists():
+                return Response(
+                    {'error': 'You are not a participant in this conversation'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        except Conversation.DoesNotExist:
+            return Response(
+                {'error': 'Conversation not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Add conversation to request data
+        data = request.data.copy()
+        data['conversation'] = conversation.conversation_id
+        
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        message = serializer.save()
+        
+        # Return detailed message data
+        detail_serializer = MessageSerializer(
+            message, context={'request': request}
+        )
+        return Response(
+            detail_serializer.data,
+            status=status.HTTP_201_CREATED
+        )

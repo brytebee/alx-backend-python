@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Messaging API Dashboard</title>
+    <title>Enhanced Messaging API Dashboard</title>
     <style>
         * {
             margin: 0;
@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -65,6 +65,30 @@
             gap: 15px;
             flex-wrap: wrap;
             align-items: end;
+        }
+
+        .quick-login {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .login-card {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .login-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .login-card h4 {
+            margin-bottom: 10px;
         }
 
         .form-group {
@@ -117,9 +141,13 @@
             transform: translateY(0);
         }
 
+        .logout-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 30px;
         }
 
@@ -149,12 +177,13 @@
         }
 
         .endpoint-item {
-            margin-bottom: 15px;
-            padding: 15px;
+            margin-bottom: 12px;
+            padding: 12px;
             background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            border-radius: 10px;
+            border-radius: 8px;
             border-left: 4px solid #3498db;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
 
         .endpoint-item:hover {
@@ -170,6 +199,8 @@
             font-weight: bold;
             margin-right: 10px;
             color: white;
+            min-width: 45px;
+            text-align: center;
         }
 
         .get { background: #27ae60; }
@@ -182,12 +213,31 @@
             font-family: 'Courier New', monospace;
             font-weight: bold;
             color: #2c3e50;
+            font-size: 13px;
         }
 
         .endpoint-desc {
-            font-size: 13px;
+            font-size: 12px;
             color: #7f8c8d;
             margin-top: 5px;
+        }
+
+        .admin-only, .host-admin {
+            border-left-color: #e74c3c !important;
+        }
+
+        .admin-only::after {
+            content: '🔒 Admin';
+            font-size: 10px;
+            color: #e74c3c;
+            float: right;
+        }
+
+        .host-admin::after {
+            content: '🔑 Host/Admin';
+            font-size: 10px;
+            color: #f39c12;
+            float: right;
         }
 
         .test-section {
@@ -214,7 +264,7 @@
             border-radius: 10px;
             font-family: 'Courier New', monospace;
             font-size: 13px;
-            min-height: 200px;
+            min-height: 300px;
             overflow-y: auto;
             white-space: pre-wrap;
         }
@@ -227,29 +277,58 @@
             pointer-events: none;
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
+        .user-info {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
             margin-top: 15px;
         }
 
-        .stat-card {
+        .user-info h4 {
+            margin-bottom: 5px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 14px;
+        }
+
+        .tab.active {
             background: linear-gradient(135deg, #3498db, #2980b9);
             color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
         }
 
-        .stat-number {
-            font-size: 2em;
-            font-weight: bold;
+        .tab-content {
+            display: none;
         }
 
-        .stat-label {
-            font-size: 0.9em;
-            opacity: 0.9;
+        .tab-content.active {
+            display: block;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .quick-btn {
+            padding: 8px 16px;
+            font-size: 12px;
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
         }
 
         @media (max-width: 768px) {
@@ -264,122 +343,320 @@
             .auth-form {
                 flex-direction: column;
             }
+
+            .quick-login {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 Messaging API Dashboard</h1>
-            <p>Interactive interface for exploring and testing your messaging API endpoints</p>
+            <h1>🚀 Enhanced Messaging API Dashboard</h1>
+            <p>Interactive interface for exploring and testing your comprehensive messaging API with authentication, user management, and role-based permissions</p>
         </div>
 
         <div class="auth-section">
-            <h2>🔐 API Configuration</h2>
+            <h2>🔐 Authentication & Configuration</h2>
             <div class="auth-form">
                 <div class="form-group">
                     <label for="baseUrl">Base URL:</label>
                     <input type="url" id="baseUrl" value="http://localhost:8000/api/v1/" placeholder="http://localhost:8000/api/v1/">
                 </div>
                 <div class="form-group">
-                    <label for="authToken">Auth Token:</label>
-                    <input type="text" id="authToken" placeholder="Bearer token (optional)">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" placeholder="user@example.com">
                 </div>
-                <button onclick="testConnection()">Test Connection</button>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" placeholder="password">
+                </div>
+                <button onclick="login()">Login</button>
+                <button onclick="register()">Register</button>
+                <button onclick="logout()" class="logout-btn" id="logoutBtn" style="display: none;">Logout</button>
             </div>
+
+            <div class="quick-login">
+                <div class="login-card" onclick="quickLogin('admin')">
+                    <h4>👑 Admin Login</h4>
+                    <p>Full system access, user management, admin dashboard</p>
+                </div>
+                <div class="login-card" onclick="quickLogin('host')">
+                    <h4>🏠 Host Login</h4>
+                    <p>User management, conversation oversight</p>
+                </div>
+                <div class="login-card" onclick="quickLogin('guest')">
+                    <h4>👤 Guest Login</h4>
+                    <p>Basic messaging and conversation features</p>
+                </div>
+            </div>
+
+            <div id="userInfo" class="user-info" style="display: none;"></div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('auth')">🔐 Authentication</button>
+            <button class="tab" onclick="showTab('conversations')">💬 Conversations</button>
+            <button class="tab" onclick="showTab('messages')">📨 Messages</button>
+            <button class="tab" onclick="showTab('admin')">👑 Admin & User Management</button>
         </div>
 
         <div class="main-content">
-            <div class="section">
-                <h2>💬 Conversation Endpoints</h2>
-                <ul class="endpoint-list">
-                    <li class="endpoint-item">
-                        <span class="method get">GET</span>
-                        <span class="endpoint-url">/conversations/</span>
-                        <div class="endpoint-desc">List all conversations for authenticated user</div>
-                    </li>
-                    <li class="endpoint-item">
-                        <span class="method post">POST</span>
-                        <span class="endpoint-url">/conversations/</span>
-                        <div class="endpoint-desc">Create a new conversation</div>
-                    </li>
-                    <li class="endpoint-item">
-                        <span class="method get">GET</span>
-                        <span class="endpoint-url">/conversations/{id}/</span>
-                        <div class="endpoint-desc">Get conversation details with messages</div>
-                    </li>
-                    <li class="endpoint-item">
-                        <span class="method post">POST</span>
-                        <span class="endpoint-url">/conversations/{id}/mark_all_read/</span>
-                        <div class="endpoint-desc">Mark all messages in conversation as read</div>
-                    </li>
-                    <li class="endpoint-item">
-                        <span class="method post">POST</span>
-                        <span class="endpoint-url">/conversations/{id}/leave/</span>
-                        <div class="endpoint-desc">Leave a conversation</div>
-                    </li>
-                    <li class="endpoint-item">
-                        <span class="method post">POST</span>
-                        <span class="endpoint-url">/conversations/{id}/add_participant/</span>
-                        <div class="endpoint-desc">Add participant to conversation</div>
-                    </li>
-                    <li class="endpoint-item">
-                        <span class="method get">GET</span>
-                        <span class="endpoint-url">/conversations/stats/</span>
-                        <div class="endpoint-desc">Get conversation statistics</div>
-                    </li>
-                </ul>
+            <!-- Authentication Endpoints -->
+            <div id="auth-content" class="tab-content active">
+                <div class="section">
+                    <h2>🔑 Authentication Endpoints</h2>
+                    <ul class="endpoint-list">
+                        <li class="endpoint-item">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-url">auth/login/</span>
+                            <div class="endpoint-desc">Login with email/password, returns JWT tokens + user data</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-url">auth/register/</span>
+                            <div class="endpoint-desc">Register new user account</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-url">auth/token/refresh/</span>
+                            <div class="endpoint-desc">Refresh access token using refresh token</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-url">auth/logout/</span>
+                            <div class="endpoint-desc">Logout and blacklist refresh token</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">auth/profile/</span>
+                            <div class="endpoint-desc">Get current user profile</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method put">PUT</span>
+                            <span class="endpoint-url">auth/profile/</span>
+                            <div class="endpoint-desc">Update user profile information</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-url">auth/change-password/</span>
+                            <div class="endpoint-desc">Change user password</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">auth/permissions/</span>
+                            <div class="endpoint-desc">Get current user's role and permissions</div>
+                        </li>
+                    </ul>
+                </div>
             </div>
 
-            <div class="section">
-                <h2>📨 Message Endpoints</h2>
-                <ul class="endpoint-list">
-                    <li class="endpoint-item">
-                        <span class="method get">GET</span>
-                        <span class="endpoint-url">/messages/</span>
-                        <div class="endpoint-desc">List messages (optionally filter by conversation)</div>
-                    </li>
-                    <li class="endpoint-item">
-                        <span class="method post">POST</span>
-                        <span class="endpoint-url">/messages/</span>
-                        <div class="endpoint-desc">Send a new message</div>
-                    </li>
-                    <li class="endpoint-item">
-                        <span class="method get">GET</span>
-                        <span class="endpoint-url">/messages/{id}/</span>
-                        <div class="endpoint-desc">Get specific message details</div>
-                    </li>
-                    <li class="endpoint-item">
-                        <span class="method put">PUT</span>
-                        <span class="endpoint-url">/messages/{id}/</span>
-                        <div class="endpoint-desc">Update a message (sender only)</div>
-                    </li>
-                    <li class="endpoint-item">
-                        <span class="method delete">DELETE</span>
-                        <span class="endpoint-url">/messages/{id}/</span>
-                        <div class="endpoint-desc">Delete a message (sender only)</div>
-                    </li>
-                    <li class="endpoint-item">
-                        <span class="method post">POST</span>
-                        <span class="endpoint-url">/messages/{id}/mark_read/</span>
-                        <div class="endpoint-desc">Mark specific message as read</div>
-                    </li>
-                    <li class="endpoint-item">
-                        <span class="method post">POST</span>
-                        <span class="endpoint-url">/messages/mark_multiple_read/</span>
-                        <div class="endpoint-desc">Mark multiple messages as read</div>
-                    </li>
-                    <li class="endpoint-item">
-                        <span class="method get">GET</span>
-                        <span class="endpoint-url">/messages/unread/</span>
-                        <div class="endpoint-desc">Get all unread messages</div>
-                    </li>
-                </ul>
+            <!-- Conversations -->
+            <div id="conversations-content" class="tab-content">
+                <div class="section">
+                    <h2>💬 Conversation Management</h2>
+                    <ul class="endpoint-list">
+                        <li class="endpoint-item">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">conversations/</span>
+                            <div class="endpoint-desc">List user's conversations with participants and recent messages</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-url">conversations/</span>
+                            <div class="endpoint-desc">Create new conversation with specified participants</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">conversations/{id}/</span>
+                            <div class="endpoint-desc">Get detailed conversation with all messages</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method put">PUT</span>
+                            <span class="endpoint-url">conversations/{id}/</span>
+                            <div class="endpoint-desc">Update conversation (participants only)</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-url">conversations/{id}/mark_all_read/</span>
+                            <div class="endpoint-desc">Mark all messages in conversation as read</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-url">conversations/{id}/leave/</span>
+                            <div class="endpoint-desc">Leave a conversation</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-url">conversations/{id}/add_participant/</span>
+                            <div class="endpoint-desc">Add participant to conversation (participants or admin/host)</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">conversations/stats/</span>
+                            <div class="endpoint-desc">Get conversation statistics for current user</div>
+                        </li>
+                        <li class="endpoint-item host-admin">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">conversations/all_conversations/</span>
+                            <div class="endpoint-desc">View all conversations system-wide</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div id="messages-content" class="tab-content">
+                <div class="section">
+                    <h2>📨 Message Operations</h2>
+                    <ul class="endpoint-list">
+                        <li class="endpoint-item">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">messages/</span>
+                            <div class="endpoint-desc">List messages from user's conversations</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-url">messages/</span>
+                            <div class="endpoint-desc">Send new message to conversation</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">messages/{id}/</span>
+                            <div class="endpoint-desc">Get specific message details with read receipts</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method put">PUT</span>
+                            <span class="endpoint-url">messages/{id}/</span>
+                            <div class="endpoint-desc">Edit message (sender only)</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method delete">DELETE</span>
+                            <span class="endpoint-url">messages/{id}/</span>
+                            <div class="endpoint-desc">Delete message (sender only)</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-url">messages/{id}/mark_read/</span>
+                            <div class="endpoint-desc">Mark specific message as read</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-url">messages/mark_multiple_read/</span>
+                            <div class="endpoint-desc">Mark multiple messages as read</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">messages/unread/</span>
+                            <div class="endpoint-desc">Get all unread messages for current user</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">messages/search/?q=query</span>
+                            <div class="endpoint-desc">Search messages in user's conversations</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">messages/recent/?days=7</span>
+                            <div class="endpoint-desc">Get recent messages (default: 7 days)</div>
+                        </li>
+                        <li class="endpoint-item">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">messages/{id}/read_receipts/</span>
+                            <div class="endpoint-desc">Get read receipts for specific message</div>
+                        </li>
+                        <li class="endpoint-item host-admin">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">messages/all_messages/</span>
+                            <div class="endpoint-desc">View all messages system-wide with filters</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Admin & User Management -->
+            <div id="admin-content" class="tab-content">
+                <div class="section">
+                    <h2>👑 User Management</h2>
+                    <ul class="endpoint-list">
+                        <li class="endpoint-item host-admin">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">auth/users/</span>
+                            <div class="endpoint-desc">List all users (filtered by role permissions)</div>
+                        </li>
+                        <li class="endpoint-item host-admin">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">auth/users/{user_id}/</span>
+                            <div class="endpoint-desc">Get detailed user information</div>
+                        </li>
+                        <li class="endpoint-item host-admin">
+                            <span class="method put">PUT</span>
+                            <span class="endpoint-url">auth/users/{user_id}/</span>
+                            <div class="endpoint-desc">Update user information</div>
+                        </li>
+                        <li class="endpoint-item admin-only">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-url">auth/users/{user_id}/change_role/</span>
+                            <div class="endpoint-desc">Change user role (guest/host/admin)</div>
+                        </li>
+                        <li class="endpoint-item admin-only">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-url">auth/users/{user_id}/deactivate/</span>
+                            <div class="endpoint-desc">Deactivate user account</div>
+                        </li>
+                        <li class="endpoint-item admin-only">
+                            <span class="method post">POST</span>
+                            <span class="endpoint-url">auth/users/{user_id}/activate/</span>
+                            <div class="endpoint-desc">Reactivate user account</div>
+                        </li>
+                        <li class="endpoint-item host-admin">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">auth/users/search/?q=query</span>
+                            <div class="endpoint-desc">Search users by name or email</div>
+                        </li>
+                        <li class="endpoint-item host-admin">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">auth/users/by_role/?role=guest</span>
+                            <div class="endpoint-desc">Filter users by role (guest/host/admin)</div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="section">
+                    <h2>📊 Admin Dashboard</h2>
+                    <ul class="endpoint-list">
+                        <li class="endpoint-item admin-only">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">auth/admin/dashboard/</span>
+                            <div class="endpoint-desc">Get comprehensive system statistics</div>
+                        </li>
+                        <li class="endpoint-item admin-only">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">auth/admin-only/</span>
+                            <div class="endpoint-desc">Admin-only content endpoint</div>
+                        </li>
+                        <li class="endpoint-item host-admin">
+                            <span class="method get">GET</span>
+                            <span class="endpoint-url">auth/host-admin/</span>
+                            <div class="endpoint-desc">Host/Admin accessible content</div>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
 
         <div class="test-section">
             <h2>🧪 API Tester</h2>
+            
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="quickTest('conversations/', 'GET')">📋 List Conversations</button>
+                <button class="quick-btn" onclick="quickTest('messages/unread/', 'GET')">📬 Unread Messages</button>
+                <button class="quick-btn" onclick="quickTest('auth/profile/', 'GET')">👤 My Profile</button>
+                <button class="quick-btn" onclick="quickTest('auth/permissions/', 'GET')">🔑 My Permissions</button>
+                <button class="quick-btn" onclick="quickTest('conversations/stats/', 'GET')">📊 My Stats</button>
+            </div>
+
             <div class="test-form">
                 <div>
                     <div class="form-group">
@@ -398,13 +675,33 @@
                     </div>
                     <div class="form-group">
                         <label for="testData">Request Body (JSON):</label>
-                        <textarea id="testData" rows="8" placeholder='{"participant_ids": ["user-uuid-1", "user-uuid-2"]}'></textarea>
+                        <textarea id="testData" rows="10" placeholder='{"participant_ids": ["user-uuid-1", "user-uuid-2"]}'></textarea>
                     </div>
                     <button onclick="makeRequest()" id="testButton">Send Request</button>
                 </div>
                 <div>
                     <h3>Response:</h3>
-                    <div id="response" class="response-section">Click "Send Request" to test an endpoint...</div>
+                    <div id="response" class="response-section">
+🚀 Welcome to Enhanced Messaging API Dashboard!
+
+Quick Start:
+1. Login using one of the role cards above
+2. Explore endpoints by clicking on them
+3. Use the quick action buttons for common operations
+4. Test custom requests in this panel
+
+Features:
+✅ JWT Authentication
+✅ Role-based Permissions (Admin/Host/Guest)  
+✅ Real-time Messaging
+✅ Read Receipts
+✅ User Management
+✅ Admin Dashboard
+✅ Search & Filtering
+✅ Conversation Management
+
+Click "Send Request" to test an endpoint...
+                    </div>
                 </div>
             </div>
         </div>
@@ -412,166 +709,486 @@
 
     <script>
         let baseUrl = 'http://localhost:8000/api/v1/';
-        let authToken = '';
+        let accessToken = '';
+        let refreshToken = '';
+        let currentUser = null;
+
+        // Tab Management
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + '-content').classList.add('active');
+            
+            // Add active class to selected tab
+            event.target.classList.add('active');
+        }
 
         // Update configuration
         document.getElementById('baseUrl').addEventListener('input', function() {
             baseUrl = this.value;
         });
 
-        document.getElementById('authToken').addEventListener('input', function() {
-            authToken = this.value;
-        });
+        // Quick login functions
+        function quickLogin(role) {
+            const credentials = {
+                admin: { email: 'admin@example.com', password: 'admin123' },
+                host: { email: 'host@example.com', password: 'host123' },
+                guest: { email: 'guest@example.com', password: 'guest123' }
+            };
 
-        // Test connection
-        async function testConnection() {
-            const button = event.target;
-            const originalText = button.textContent;
-            button.textContent = 'Testing...';
-            button.disabled = true;
+            const cred = credentials[role];
+            document.getElementById('email').value = cred.email;
+            document.getElementById('password').value = cred.password;
+            
+            login();
+        }
+
+        // Authentication functions
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                alert('Please enter email and password');
+                return;
+            }
 
             try {
-                const headers = {
-                    'Content-Type': 'application/json',
-                };
-
-                if (authToken) {
-                    headers['Authorization'] = `Bearer ${authToken}`;
-                }
-
-                const response = await fetch(baseUrl + 'conversations/', {
-                    method: 'GET',
-                    headers: headers
+                const response = await fetch(baseUrl + 'auth/login/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
                 });
 
+                const data = await response.json();
+
                 if (response.ok) {
-                    alert('✅ Connection successful!');
+                    accessToken = data.access;
+                    refreshToken = data.refresh;
+                    currentUser = data.user;
+                    
+                    updateUserInfo();
+                    alert('✅ Login successful!');
                 } else {
-                    alert(`❌ Connection failed: ${response.status} ${response.statusText}`);
+                    alert(`❌ Login failed: ${data.error || 'Invalid credentials'}`);
                 }
             } catch (error) {
-                alert(`❌ Connection error: ${error.message}`);
-            } finally {
-                button.textContent = originalText;
-                button.disabled = false;
+                alert(`❌ Login error: ${error.message}`);
             }
         }
 
-        // Make API request
+        async function register() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            if (!email || !password) {
+                alert('Please enter email and password');
+                return;
+            }
+
+            try {
+                const response = await fetch(baseUrl + 'auth/register/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('✅ Registration successful! Please login with your credentials.');
+                    // Clear password field for security
+                    document.getElementById('password').value = '';
+                } else {
+                    alert(`❌ Registration failed: ${data.error || data.detail || 'Registration error'}`);
+                }
+            } catch (error) {
+                alert(`❌ Registration error: ${error.message}`);
+            }
+        }
+
+        function updateUserInfo() {
+            const userInfoDiv = document.getElementById('userInfo');
+            const logoutBtn = document.getElementById('logoutBtn');
+            
+            if (currentUser && accessToken) {
+                userInfoDiv.style.display = 'block';
+                logoutBtn.style.display = 'inline-block';
+                
+                userInfoDiv.innerHTML = `
+                    <h4>👤 Logged in as: ${currentUser.full_name}</h4>
+                    <p><strong>Email:</strong> ${currentUser.email}</p>
+                    <p><strong>Role:</strong> ${currentUser.role}</p>
+                    <p><strong>User ID:</strong> ${currentUser.user_id}</p>
+                `;
+            } else {
+                userInfoDiv.style.display = 'none';
+                logoutBtn.style.display = 'none';
+            }
+        }
+
+        function logout() {
+            // Clear tokens and user data
+            accessToken = '';
+            refreshToken = '';
+            currentUser = null;
+            
+            // Clear form fields
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            
+            // Update UI
+            updateUserInfo();
+            
+            // Clear response area
+            document.getElementById('response').textContent = '🚀 Logged out successfully!\n\nWelcome to Enhanced Messaging API Dashboard!\n\nQuick Start:\n1. Login using one of the role cards above\n2. Explore endpoints by clicking on them\n3. Use the quick action buttons for common operations\n4. Test custom requests in this panel';
+            
+            alert('✅ Logged out successfully!');
+        }
+
+        // Quick test functions
+        function quickTest(endpoint, method = 'GET') {
+            document.getElementById('testEndpoint').value = endpoint;
+            document.getElementById('testMethod').value = method;
+            
+            // Clear request body for GET requests
+            if (method === 'GET') {
+                document.getElementById('testData').value = '';
+            }
+            
+            makeRequest();
+        }
+
+        // Main request function
         async function makeRequest() {
             const method = document.getElementById('testMethod').value;
             const endpoint = document.getElementById('testEndpoint').value;
-            const data = document.getElementById('testData').value;
+            const requestData = document.getElementById('testData').value;
             const responseDiv = document.getElementById('response');
-            const button = document.getElementById('testButton');
-
-            // UI feedback
-            button.textContent = 'Sending...';
-            button.disabled = true;
-            responseDiv.className = 'response-section loading';
-
+            const testButton = document.getElementById('testButton');
+            
+            if (!endpoint) {
+                alert('Please enter an endpoint');
+                return;
+            }
+            
+            // Show loading state
+            testButton.textContent = 'Sending...';
+            testButton.disabled = true;
+            responseDiv.classList.add('loading');
+            
             const headers = {
                 'Content-Type': 'application/json',
             };
-
-            if (authToken) {
-                headers['Authorization'] = `Bearer ${authToken}`;
+            
+            // Add authorization header if token exists
+            if (accessToken) {
+                headers['Authorization'] = `Bearer ${accessToken}`;
             }
-
+            
             const requestOptions = {
                 method: method,
                 headers: headers,
             };
-
-            // Add body for POST, PUT, PATCH requests
-            if (['POST', 'PUT', 'PATCH'].includes(method) && data.trim()) {
+            
+            // Add body for non-GET requests
+            if (method !== 'GET' && requestData.trim()) {
                 try {
-                    requestOptions.body = JSON.stringify(JSON.parse(data));
-                } catch (error) {
-                    responseDiv.innerHTML = `❌ Invalid JSON in request body: ${error.message}`;
-                    responseDiv.className = 'response-section status-error';
-                    button.textContent = 'Send Request';
-                    button.disabled = false;
+                    JSON.parse(requestData); // Validate JSON
+                    requestOptions.body = requestData;
+                } catch (e) {
+                    alert('Invalid JSON in request body');
+                    resetButton();
                     return;
                 }
             }
-
+            
             try {
                 const url = baseUrl + endpoint.replace(/^\//, '');
-                const startTime = Date.now();
-                
                 const response = await fetch(url, requestOptions);
-                const endTime = Date.now();
+                const data = await response.json();
                 
-                const responseText = await response.text();
-                let responseData;
-                
-                try {
-                    responseData = JSON.parse(responseText);
-                } catch {
-                    responseData = responseText;
-                }
-
                 // Format response
-                const statusClass = response.ok ? 'status-success' : 'status-error';
-                const statusIcon = response.ok ? '✅' : '❌';
+                const timestamp = new Date().toLocaleTimeString();
+                let responseText = `[${timestamp}] ${method} ${url}\n`;
+                responseText += `Status: ${response.status} ${response.statusText}\n`;
+                responseText += `${'='.repeat(50)}\n`;
+                responseText += JSON.stringify(data, null, 2);
                 
-                responseDiv.innerHTML = `${statusIcon} Status: ${response.status} ${response.statusText}
-Time: ${endTime - startTime}ms
-URL: ${url}
-
-Response:
-${JSON.stringify(responseData, null, 2)}`;
-                
-                responseDiv.className = `response-section ${statusClass}`;
+                responseDiv.textContent = responseText;
+                responseDiv.className = `response-section ${response.ok ? 'status-success' : 'status-error'}`;
                 
             } catch (error) {
-                responseDiv.innerHTML = `❌ Network Error: ${error.message}`;
+                const timestamp = new Date().toLocaleTimeString();
+                responseDiv.textContent = `[${timestamp}] ERROR: ${error.message}\n\nFailed to make request to: ${baseUrl + endpoint}`;
                 responseDiv.className = 'response-section status-error';
             } finally {
-                button.textContent = 'Send Request';
-                button.disabled = false;
+                resetButton();
             }
         }
+        
+        function resetButton() {
+            const testButton = document.getElementById('testButton');
+            const responseDiv = document.getElementById('response');
+            
+            testButton.textContent = 'Send Request';
+            testButton.disabled = false;
+            responseDiv.classList.remove('loading');
+        }
 
-        // Pre-fill common requests
+        // Add click handlers for endpoint items
         document.addEventListener('DOMContentLoaded', function() {
-            // Add click handlers for endpoint items
+            // Add click handlers to endpoint items
             document.querySelectorAll('.endpoint-item').forEach(item => {
                 item.addEventListener('click', function() {
                     const method = this.querySelector('.method').textContent;
-                    const url = this.querySelector('.endpoint-url').textContent;
+                    const endpoint = this.querySelector('.endpoint-url').textContent;
                     
+                    // Set values in test form
                     document.getElementById('testMethod').value = method;
-                    document.getElementById('testEndpoint').value = url.replace(/^\//, '');
+                    document.getElementById('testEndpoint').value = endpoint;
                     
-                    // Pre-fill common request bodies
-                    const testData = document.getElementById('testData');
-                    if (method === 'POST' && url.includes('/conversations/')) {
-                        if (url === '/conversations/') {
-                            testData.value = JSON.stringify({
-                                "participant_ids": ["user-uuid-1", "user-uuid-2"]
-                            }, null, 2);
-                        } else if (url.includes('add_participant')) {
-                            testData.value = JSON.stringify({
-                                "user_id": "user-uuid-here"
-                            }, null, 2);
-                        }
-                    } else if (method === 'POST' && url === '/messages/') {
-                        testData.value = JSON.stringify({
-                            "conversation": "conversation-uuid-here",
-                            "message_body": "Hello, this is a test message!"
-                        }, null, 2);
-                    } else if (method === 'POST' && url.includes('mark_multiple_read')) {
-                        testData.value = JSON.stringify({
-                            "message_ids": ["message-uuid-1", "message-uuid-2"]
-                        }, null, 2);
+                    // Clear request body for GET requests
+                    if (method === 'GET') {
+                        document.getElementById('testData').value = '';
                     } else {
-                        testData.value = '';
+                        // Set example data based on endpoint
+                        setExampleData(endpoint, method);
+                    }
+                    
+                    // Scroll to test section
+                    document.querySelector('.test-section').scrollIntoView({ 
+                        behavior: 'smooth' 
+                    });
+                });
+            });
+            
+            // Initialize base URL from input
+            baseUrl = document.getElementById('baseUrl').value;
+        });
+
+        function setExampleData(endpoint, method) {
+            const testDataField = document.getElementById('testData');
+            let exampleData = '';
+            
+            // Set example data based on endpoint and method
+            if (endpoint.includes('conversations/') && method === 'POST') {
+                if (endpoint === 'conversations/') {
+                    exampleData = JSON.stringify({
+                        "participant_ids": ["user-uuid-1", "user-uuid-2"]
+                    }, null, 2);
+                } else if (endpoint.includes('add_participant')) {
+                    exampleData = JSON.stringify({
+                        "user_id": "user-uuid-to-add"
+                    }, null, 2);
+                }
+            } else if (endpoint.includes('messages/') && method === 'POST') {
+                if (endpoint === 'messages/') {
+                    exampleData = JSON.stringify({
+                        "conversation": "conversation-uuid",
+                        "content": "Hello, this is a test message!"
+                    }, null, 2);
+                } else if (endpoint.includes('mark_multiple_read')) {
+                    exampleData = JSON.stringify({
+                        "message_ids": ["message-uuid-1", "message-uuid-2"]
+                    }, null, 2);
+                }
+            } else if (endpoint.includes('auth/register') && method === 'POST') {
+                exampleData = JSON.stringify({
+                    "email": "newuser@example.com",
+                    "password": "securepassword123",
+                    "full_name": "New User"
+                }, null, 2);
+            } else if (endpoint.includes('auth/login') && method === 'POST') {
+                exampleData = JSON.stringify({
+                    "email": "user@example.com",
+                    "password": "password"
+                }, null, 2);
+            } else if (endpoint.includes('change-password') && method === 'POST') {
+                exampleData = JSON.stringify({
+                    "old_password": "currentpassword",
+                    "new_password": "newpassword123"
+                }, null, 2);
+            } else if (endpoint.includes('change_role') && method === 'POST') {
+                exampleData = JSON.stringify({
+                    "new_role": "host"
+                }, null, 2);
+            } else if (method === 'PUT' && endpoint.includes('profile')) {
+                exampleData = JSON.stringify({
+                    "full_name": "Updated Name",
+                    "bio": "Updated bio information"
+                }, null, 2);
+            } else if (method === 'PUT' && endpoint.includes('messages/')) {
+                exampleData = JSON.stringify({
+                    "content": "Updated message content"
+                }, null, 2);
+            } else if (method === 'PUT' && endpoint.includes('conversations/')) {
+                exampleData = JSON.stringify({
+                    "participant_ids": ["user-uuid-1", "user-uuid-2", "user-uuid-3"]
+                }, null, 2);
+            }
+            
+            testDataField.value = exampleData;
+        }
+
+        // Auto-refresh token when needed
+        async function refreshAccessToken() {
+            if (!refreshToken) {
+                return false;
+            }
+            
+            try {
+                const response = await fetch(baseUrl + 'auth/token/refresh/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ refresh: refreshToken })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    accessToken = data.access;
+                    return true;
+                }
+            } catch (error) {
+                console.error('Token refresh failed:', error);
+            }
+            
+            return false;
+        }
+
+        // Enhanced makeRequest with token refresh
+        const originalMakeRequest = makeRequest;
+        makeRequest = async function() {
+            const response = await originalMakeRequest();
+            
+            // If we get a 401 and have a refresh token, try refreshing
+            if (response && response.status === 401 && refreshToken) {
+                const refreshed = await refreshAccessToken();
+                if (refreshed) {
+                    // Retry the original request
+                    return originalMakeRequest();
+                }
+            }
+            
+            return response;
+        };
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + Enter to send request
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                makeRequest();
+            }
+            
+            // Escape to clear response
+            if (e.key === 'Escape') {
+                document.getElementById('response').textContent = '';
+            }
+        });
+
+        // Add some helpful tooltips and hints
+        window.addEventListener('load', function() {
+            // Add title attributes for better UX
+            document.querySelectorAll('.endpoint-item').forEach(item => {
+                const desc = item.querySelector('.endpoint-desc');
+                if (desc) {
+                    item.title = 'Click to test: ' + desc.textContent;
+                }
+            });
+            
+            // Add placeholder hints
+            const testDataField = document.getElementById('testData');
+            testDataField.placeholder = `Enter JSON request body here...
+
+Examples:
+- POST conversations/: {"participant_ids": ["uuid1", "uuid2"]}
+- POST messages/: {"conversation": "uuid", "content": "Hello!"}
+- PUT profile/: {"full_name": "New Name"}
+
+Tip: Use Ctrl+Enter to send request`;
+            
+            // Add endpoint search functionality
+            addEndpointSearch();
+        });
+
+        function addEndpointSearch() {
+            // Create search input
+            const searchContainer = document.createElement('div');
+            searchContainer.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1000;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                padding: 10px;
+                border-radius: 10px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            `;
+            
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.placeholder = 'Search endpoints...';
+            searchInput.style.cssText = `
+                padding: 8px 12px;
+                border: 2px solid #e1e8ed;
+                border-radius: 8px;
+                font-size: 14px;
+                width: 200px;
+            `;
+            
+            searchContainer.appendChild(searchInput);
+            document.body.appendChild(searchContainer);
+            
+            // Search functionality
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+                document.querySelectorAll('.endpoint-item').forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    const section = item.closest('.section');
+                    
+                    if (text.includes(query)) {
+                        item.style.display = 'block';
+                        section.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                // Hide sections with no visible endpoints
+                document.querySelectorAll('.section').forEach(section => {
+                    const visibleItems = section.querySelectorAll('.endpoint-item[style*="display: block"], .endpoint-item:not([style*="display: none"])');
+                    if (query && visibleItems.length === 0) {
+                        section.style.display = 'none';
+                    } else if (!query) {
+                        section.style.display = 'block';
                     }
                 });
             });
-        });
+            
+            // Clear search on escape
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    this.value = '';
+                    this.dispatchEvent(new Event('input'));
+                }
+            });
+        }
     </script>
 </body>
 </html>
