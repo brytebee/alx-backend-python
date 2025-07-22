@@ -1,0 +1,15 @@
+### REGISTER
+POST http://127.0.0.1:8000/api/v1/auth/register/
+Content-Type: application/json
+
+{
+  "email": "newuser002@chats.com",
+  "password": "securepassword123",
+  "confirm_password": "securepassword123",
+  "first_name": "New",
+  "last_name": "User001"
+}
+
+### GET MESSAGES
+GET http://127.0.0.1:8000/api/v1/messages/
+Content-Type: application/json
