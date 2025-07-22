@@ -26,7 +26,7 @@ class IsMessageSender(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         # Read permissions for authenticated users
-        if request.method in ['GET', 'HEAD', 'OPTIONS']:
+        if request.method in ['GET', 'PUT', 'PATCH', 'HEAD', 'OPTIONS']:
             return True
 
         # Write permissions only to the sender of the message
