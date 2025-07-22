@@ -1,6 +1,7 @@
 # chats/permissions.py
-from rest_framework.permissions import BasePermission
+from rest_framework import permissions
 
+BasePermission = permissions.BasePermission
 
 class IsOwnerOrReadOnly(BasePermission):
     """
