@@ -1,0 +1,93 @@
+# GET request to retrieve conversations
+2025-07-24 14:30:15,123 INFO Request: GET /api/v1/conversations/
+2025-07-24 14:30:15,123 INFO User: john.doe@example.com (Host)
+2025-07-24 14:30:15,123 INFO Time: 2025-07-24 14:30:15
+2025-07-24 14:30:15,123 INFO IP: 127.0.0.1
+2025-07-24 14:30:15,187 INFO Response: 200
+2025-07-24 14:30:15,187 INFO Processing time: 0.064s
+
+# POST request to create a new conversation
+2025-07-24 14:32:45,456 INFO Request: POST /api/v1/conversations/
+2025-07-24 14:32:45,456 INFO User: sarah.wilson@example.com (Admin)
+2025-07-24 14:32:45,456 INFO Time: 2025-07-24 14:32:45
+2025-07-24 14:32:45,456 INFO IP: 192.168.1.100
+2025-07-24 14:32:45,523 INFO Response: 201
+2025-07-24 14:32:45,523 INFO Processing time: 0.067s
+
+# GET request with query parameters
+2025-07-24 14:35:12,789 INFO Request: GET /api/v1/conversations/?page=2&limit=10
+2025-07-24 14:35:12,789 INFO User: mike.johnson@example.com (Guest)
+2025-07-24 14:35:12,789 INFO Time: 2025-07-24 14:35:12
+2025-07-24 14:35:12,789 INFO IP: 10.0.0.5
+2025-07-24 14:35:12,842 INFO Response: 200
+2025-07-24 14:35:12,842 INFO Processing time: 0.053s
+
+# unauthorized request
+2025-07-24 14:38:20,321 INFO Request: GET /api/v1/conversations/
+2025-07-24 14:38:20,321 INFO User: AnonymousUser
+2025-07-24 14:38:20,321 INFO Time: 2025-07-24 14:38:20
+2025-07-24 14:38:20,321 INFO IP: 203.0.113.45
+2025-07-24 14:38:20,325 INFO Response: 401
+2025-07-24 14:38:20,325 INFO Processing time: 0.004s
+
+# request with forwarded IP (behind proxy)
+2025-07-24 14:40:55,654 INFO Request: GET /api/v1/conversations/
+2025-07-24 14:40:55,654 INFO User: alice.brown@example.com (Host)
+2025-07-24 14:40:55,654 INFO Time: 2025-07-24 14:40:55
+2025-07-24 14:40:55,654 INFO IP: 172.16.0.10
+2025-07-24 14:40:55,721 INFO Response: 200
+2025-07-24 14:40:55,721 INFO Processing time: 0.067s
+
+# DELETE request (if supported)
+2025-07-24 14:43:30,987 INFO Request: DELETE /api/v1/conversations/
+2025-07-24 14:43:30,987 INFO User: admin@example.com (Admin)
+2025-07-24 14:43:30,987 INFO Time: 2025-07-24 14:43:30
+2025-07-24 14:43:30,987 INFO IP: 127.0.0.1
+2025-07-24 14:43:30,992 INFO Response: 405
+2025-07-24 14:43:30,992 INFO Processing time: 0.005s
+
+# request with slow database query
+2025-07-24 14:45:18,234 INFO Request: GET /api/v1/conversations/?search=message_content
+2025-07-24 14:45:18,234 INFO User: emma.davis@example.com (Host)
+2025-07-24 14:45:18,234 INFO Time: 2025-07-24 14:45:18
+2025-07-24 14:45:18,234 INFO IP: 192.168.1.50
+2025-07-24 14:45:18,456 INFO Response: 200
+2025-07-24 14:45:18,456 INFO Processing time: 0.222s
+
+# PUT request to update conversation
+2025-07-24 14:47:05,123 INFO Request: PUT /api/v1/conversations/
+2025-07-24 14:47:05,123 INFO User: robert.smith@example.com (Host)
+2025-07-24 14:47:05,123 INFO Time: 2025-07-24 14:47:05
+2025-07-24 14:47:05,123 INFO IP: 10.0.0.15
+2025-07-24 14:47:05,178 INFO Response: 200
+2025-07-24 14:47:05,178 INFO Processing time: 0.055s
+
+# request with server error
+2025-07-24 14:50:42,567 INFO Request: POST /api/v1/conversations/
+2025-07-24 14:50:42,567 INFO User: lisa.garcia@example.com (Guest)
+2025-07-24 14:50:42,567 INFO Time: 2025-07-24 14:50:42
+2025-07-24 14:50:42,567 INFO IP: 203.0.113.100
+2025-07-24 14:50:42,612 INFO Response: 500
+2025-07-24 14:50:42,612 INFO Processing time: 0.045s
+
+# batch of rapid requests from same user
+2025-07-24 14:52:10,345 INFO Request: GET /api/v1/conversations/
+2025-07-24 14:52:10,345 INFO User: test.user@example.com (Guest)
+2025-07-24 14:52:10,345 INFO Time: 2025-07-24 14:52:10
+2025-07-24 14:52:10,345 INFO IP: 127.0.0.1
+2025-07-24 14:52:10,389 INFO Response: 200
+2025-07-24 14:52:10,389 INFO Processing time: 0.044s
+
+2025-07-24 14:52:11,123 INFO Request: GET /api/v1/conversations/
+2025-07-24 14:52:11,123 INFO User: test.user@example.com (Guest)
+2025-07-24 14:52:11,123 INFO Time: 2025-07-24 14:52:11
+2025-07-24 14:52:11,123 INFO IP: 127.0.0.1
+2025-07-24 14:52:11,165 INFO Response: 200
+2025-07-24 14:52:11,165 INFO Processing time: 0.042s
+
+2025-07-24 14:52:11,890 INFO Request: GET /api/v1/conversations/
+2025-07-24 14:52:11,890 INFO User: test.user@example.com (Guest)
+2025-07-24 14:52:11,890 INFO Time: 2025-07-24 14:52:11
+2025-07-24 14:52:11,890 INFO IP: 127.0.0.1
+2025-07-24 14:52:11,932 INFO Response: 200
+2025-07-24 14:52:11,932 INFO Processing time: 0.042s
