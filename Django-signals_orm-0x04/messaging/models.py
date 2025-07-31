@@ -208,3 +208,23 @@ class MessageReadReceipt(models.Model):
     
     def __str__(self):
         return f"{self.user.full_name} read message {self.message.message_id} at {self.read_at}"
+    
+class Notification(models.Model):
+    """Store messages received by users"""
+    
+    notification_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        db_index=True
+    )
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="sent_notification"
+    )
+    receiver = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="received_notification"
+    )
