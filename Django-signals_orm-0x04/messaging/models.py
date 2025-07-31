@@ -249,7 +249,7 @@ class MessageHistory:
         on_delete=models.CASCADE,
         related_name="current_message"
     )
-    viewer=models.ForeignKey(
+    edited_by=models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="view_message_history"

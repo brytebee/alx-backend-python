@@ -18,5 +18,6 @@ def create_message_history(sender, instance, created, **kwargs):
     model_name="MessageHistory",
     object_id=instance.pk,
     action=action,
-    current_message=f"{instance.content}"
+    current_message=f"{instance.content}",
+    edited_by=User
   )
