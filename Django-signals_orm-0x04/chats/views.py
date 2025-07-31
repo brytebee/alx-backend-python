@@ -3,7 +3,8 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count, Q, Exists, OuterRef
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from django.utils import timezone
 from datetime import timedelta
 from django_filters.rest_framework import DjangoFilterBackend
@@ -30,6 +31,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at', 'updated_at']
     ordering = ['-created_at']
     
+    @method_decorator(cache_page(60))
     def get_queryset(self):
         """Return conversations where current user is a participant"""
         return Conversation.objects.filter(
