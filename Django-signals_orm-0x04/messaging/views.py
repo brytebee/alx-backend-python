@@ -3,6 +3,8 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from django.utils import timezone
 from datetime import timedelta
 from django_filters.rest_framework import DjangoFilterBackend
@@ -245,6 +247,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     ordering_fields = ['sent_at', 'edited_at']
     ordering = ['-sent_at']
     
+    @method_decorator(cache_page(60))
     def get_queryset(self):
         """Return messages from conversations where current user is a participant"""
         user_conversations = Conversation.objects.filter(
