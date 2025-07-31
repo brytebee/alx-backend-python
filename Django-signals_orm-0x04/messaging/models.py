@@ -156,6 +156,13 @@ class Message(models.Model):
         on_delete=models.CASCADE,
         related_name='messages'
     )
+    parent_message = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='replies'
+    )
     content = models.TextField()
     timestamp = models.DateTimeField(default=timezone.now)
     edited = models.BooleanField(default=False)
@@ -170,17 +177,12 @@ class Message(models.Model):
         indexes = [
             models.Index(fields=['sender']),
             models.Index(fields=['conversation']),
-            models.Index(fields=['sent_at']),
-        ]
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(message_body__isnull=False) & ~models.Q(message_body=''),
-                name='message_body_not_empty'
-            ),
+            models.Index(fields=['timestamp']),
+            models.Index(fields=['parent_message']),
         ]
     
     def __str__(self):
-        preview = self.message_body[:50] + '...' if len(self.message_body) > 50 else self.message_body
+        preview = self.content[:50] + '...' if len(self.content) > 50 else self.content
         return f"Message from {self.sender.full_name}: {preview}"
     
     def save(self, *args, **kwargs):
