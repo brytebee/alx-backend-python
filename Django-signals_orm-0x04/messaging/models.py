@@ -168,7 +168,7 @@ class Message(models.Model):
     edited = models.BooleanField(default=False)
     
     # Additional fields that are often useful in messaging systems
-    is_read = models.BooleanField(default=False)
+    unread = models.BooleanField(default=False)
     edited_at = models.DateTimeField(null=True, blank=True)
     
     class Meta:

@@ -497,6 +497,15 @@ class MessageViewSet(viewsets.ModelViewSet):
             'total_reads': len(receipt_data)
         })
 
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def all_unread_messages(self, request):
+        """Return all unread messages"""
+        messages = Message.unread.unread_for_user().only()
+
+        return Response(
+            {"data": messages, status:status.HTTP_200_OK}
+        )
+
 
 # Helper mixin for nested message viewset
 class NestedMessageViewSet(MessageViewSet):
