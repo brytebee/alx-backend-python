@@ -3,7 +3,6 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count, Q, Exists, OuterRef
 from django.utils import timezone
 from datetime import timedelta
 from django_filters.rest_framework import DjangoFilterBackend
@@ -15,7 +14,7 @@ from .serializers import (
     BulkMessageReadSerializer, ConversationStatsSerializer
 )
 from .permissions import (
-    IsConversationParticipant, IsMessageSender, IsAdminOrHost
+    IsConversationParticipant, IsMessageSender, IsAdminOrHost, IsOwnerOrAdmin
 )
 
 
@@ -558,3 +557,27 @@ class NestedMessageViewSet(MessageViewSet):
             detail_serializer.data,
             status=status.HTTP_201_CREATED
         )
+
+# Manage User
+class UserMgtViewSet(viewsets.ModelViewSet):
+    """Viewset for more user management"""
+
+    @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated, IsOwnerOrAdmin])
+    def delete_user(self, request, *args, **kwargs):
+        """Delete account"""
+        user_pk = self.kwargs.get("user_pk")
+
+        # Retrieve user
+        try:
+            user = User.objects.get(pk=user_pk)
+            user.delete()
+            return Response(
+                    {'message': "User deleted successfully."},
+                    status=status.HTTP_200_OK
+                )
+        except User.DoesNotExist:
+            return Response(
+                {'error': 'User not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+

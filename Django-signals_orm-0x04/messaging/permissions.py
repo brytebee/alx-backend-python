@@ -68,6 +68,18 @@ class IsAdmin(BasePermission):
             request.user.role == 'admin'
         )
 
+class IsOwnerOrAdmin(BasePermission):
+    """
+    Permission to only allow owner or admin users.
+    """
+
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated or 
+            request.user.role == 'admin'
+        )
+
 
 class CanManageUsers(BasePermission):
     """
