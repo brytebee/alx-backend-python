@@ -158,6 +158,7 @@ class Message(models.Model):
     )
     content = models.TextField()
     timestamp = models.DateTimeField(default=timezone.now)
+    edited = models.BooleanField(default=False)
     
     # Additional fields that are often useful in messaging systems
     is_read = models.BooleanField(default=False)
@@ -165,7 +166,7 @@ class Message(models.Model):
     
     class Meta:
         db_table = 'message'
-        ordering = ['-sent_at']
+        ordering = ['-timestamp']
         indexes = [
             models.Index(fields=['sender']),
             models.Index(fields=['conversation']),
@@ -211,7 +212,7 @@ class MessageReadReceipt(models.Model):
     
 class Notification(models.Model):
     """Store messages received by users"""
-    
+
     notification_id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -228,3 +229,33 @@ class Notification(models.Model):
         on_delete=models.CASCADE,
         related_name="received_notification"
     )
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "notification"
+        ordering = ["-timestamp"]
+
+class MessageHistory:
+    """Track message history"""
+
+    message_history_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        db_index=True
+    )
+    current_content = models.ForeignKey(
+        Message,
+        on_delete=models.CASCADE,
+        related_name="current_message"
+    )
+    viewer=models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="view_message_history"
+    )
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "messgae_history"
+        ordering = ["-timestamp"]
