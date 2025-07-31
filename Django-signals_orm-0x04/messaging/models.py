@@ -146,13 +146,18 @@ class Message(models.Model):
         on_delete=models.CASCADE,
         related_name='sent_messages'
     )
+    receiver = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='received_messages'
+    )
     conversation = models.ForeignKey(
         Conversation,
         on_delete=models.CASCADE,
         related_name='messages'
     )
-    message_body = models.TextField()
-    sent_at = models.DateTimeField(default=timezone.now)
+    content = models.TextField()
+    time_stamp = models.DateTimeField(default=timezone.now)
     
     # Additional fields that are often useful in messaging systems
     is_read = models.BooleanField(default=False)
