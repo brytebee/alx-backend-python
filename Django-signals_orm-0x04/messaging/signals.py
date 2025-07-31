@@ -6,4 +6,4 @@ from .models import User, Notification, Message
 def create_notification(sender, instance, created, **kwargs):
   """Create a notification when a message is created"""
   if created:
-    Notification.instance.create(sender=User, receiver=User)
+    Notification.objects.create(sender=User, receiver=User)
