@@ -22,43 +22,78 @@ def create_message_history(sender, instance, created, **kwargs):
     edited_by=User
   )
 
+# @receiver(post_delete, sender=User)
+# def clean_user_resources(sender, instance, **kwargs):
+#     """Delete all resources associated with user when account is destroyed"""
+
+#     models_and_fields = [
+#         (Message, ['sender', 'receiver']),
+#         (Notification, ['sender', 'receiver']),
+#         (Conversation, ['participant']),
+#         (ConversationParticipant, ['user']),
+#         (MessageReadReceipt, ['user']),
+#         (MessageHistory, ['edited_by']),
+#     ]
+    
+#     for model, fields in models_and_fields:
+#         try:
+#             for field in fields:
+#                 # Check if the field exists on the model before filtering
+#                 if hasattr(model, field):
+#                     deleted_count, _ = model.objects.filter(**{field: instance}).delete()
+#                     if deleted_count > 0:
+#                         print(f"Deleted {deleted_count} {model._meta.verbose_name_plural} for {instance.first_name}")
+#         except Exception as e:
+#             print(f"{model._meta.verbose_name_plural} associated with {instance.first_name} could not be destroyed: {e}")
+    
+#     # Handle conversations separately due to M2M relationship
+#     try:
+#         conversations_to_delete = []
+#         for conversation in instance.conversations.all():
+#             if conversation.participants.count() <= 1:  # Only this user left
+#                 conversations_to_delete.append(conversation)
+        
+#         for conversation in conversations_to_delete:
+#             conversation.delete()
+            
+#         if conversations_to_delete:
+#             print(f"Deleted {len(conversations_to_delete)} empty conversations for {instance.first_name}")
+            
+#     except Exception as e:
+#         print(f"Conversations associated with {instance.first_name} could not be cleaned up: {e}")
+
 @receiver(post_delete, sender=User)
 def clean_user_resources(sender, instance, **kwargs):
     """Delete all resources associated with user when account is destroyed"""
-
-    models_and_fields = [
-        (Message, ['sender', 'receiver']),
-        (Notification, ['sender', 'receiver']),
-        (Conversation, ['participant']),
-        (ConversationParticipant, ['user']),
-        (MessageReadReceipt, ['user']),
-        (MessageHistory, ['edited_by']),
-    ]
     
-    for model, fields in models_and_fields:
-        try:
-            for field in fields:
-                # Check if the field exists on the model before filtering
-                if hasattr(model, field):
-                    deleted_count, _ = model.objects.filter(**{field: instance}).delete()
-                    if deleted_count > 0:
-                        print(f"Deleted {deleted_count} {model._meta.verbose_name_plural} for {instance.first_name}")
-        except Exception as e:
-            print(f"{model._meta.verbose_name_plural} associated with {instance.first_name} could not be destroyed: {e}")
+    # Delete messages sent by this user
+    Message.objects.filter(sender=instance).delete()
     
-    # Handle conversations separately due to M2M relationship
-    try:
-        conversations_to_delete = []
-        for conversation in instance.conversations.all():
-            if conversation.participants.count() <= 1:  # Only this user left
-                conversations_to_delete.append(conversation)
-        
-        for conversation in conversations_to_delete:
+    # Delete messages received by this user
+    Message.objects.filter(receiver=instance).delete()
+    
+    # Delete notifications for this user
+    Notification.objects.filter(receiver=instance).delete()
+    
+    # Delete notifications sent by this user (if any)
+    Notification.objects.filter(sender=instance).delete()
+    
+    # Delete message read receipts
+    MessageReadReceipt.objects.filter(user=instance).delete()
+    
+    # Handle conversations - remove user as participant
+    # and delete conversations with no remaining participants
+    conversation_participants = ConversationParticipant.objects.filter(user=instance)
+    conversations_to_check = []
+    
+    for participant in conversation_participants:
+        conversations_to_check.append(participant.conversation)
+        participant.delete()
+    
+    # Delete conversations that have no participants left
+    for conversation in conversations_to_check:
+        if not conversation.participants.exists():
             conversation.delete()
-            
-        if conversations_to_delete:
-            print(f"Deleted {len(conversations_to_delete)} empty conversations for {instance.first_name}")
-            
-    except Exception as e:
-        print(f"Conversations associated with {instance.first_name} could not be cleaned up: {e}")
-
+    
+    # If you have MessageHistory model, delete those too
+    MessageHistory.objects.filter(user=instance).delete()
