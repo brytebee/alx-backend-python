@@ -157,7 +157,7 @@ class Message(models.Model):
         related_name='messages'
     )
     content = models.TextField()
-    time_stamp = models.DateTimeField(default=timezone.now)
+    timestamp = models.DateTimeField(default=timezone.now)
     
     # Additional fields that are often useful in messaging systems
     is_read = models.BooleanField(default=False)
