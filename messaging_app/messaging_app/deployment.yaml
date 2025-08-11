@@ -1,1 +1,39 @@
 apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-messaging-app
+  labels:
+    app: django-messaging
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: django-messaging
+  template:
+    metadata:
+      labels:
+        app: django-messaging
+    spec:
+      containers:
+      - name: django-app
+        image: django:latest  # Replace with your Django Docker image
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DEBUG
+          value: "False"
+        - name: ALLOWED_HOSTS
+          value: "*"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: django-messaging-service
+spec:
+  selector:
+    app: django-messaging
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
+  type: ClusterIP
