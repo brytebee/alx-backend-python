@@ -1,0 +1,8 @@
+# Install Nginx Ingress Controller
+minikube addons enable ingress
+
+# Apply Ingress Configuration
+kubectl apply -f ingress.yaml
+
+# Verify Ingress
+kubectl get ingress django-ingress

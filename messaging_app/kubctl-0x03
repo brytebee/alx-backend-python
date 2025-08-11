@@ -1,0 +1,39 @@
+#!/bin/bash
+# kubctl-0x03 - Rolling Update with Downtime Testing
+
+set -e
+
+# Start port-forward in background for testing
+kubectl port-forward svc/django-messaging-service 8080:80 &
+PF_PID=$!
+sleep 3
+
+# Start continuous requests in background
+(
+    while true; do
+        curl -s http://localhost:8080/ >/dev/null 2>&1 && echo "✓" || echo "✗"
+        sleep 0.5
+    done
+) &
+CURL_PID=$!
+
+echo "Starting rolling update..."
+
+# Apply updated deployment
+kubectl apply -f blue_deployment.yaml
+
+# Monitor rollout
+kubectl rollout status deployment/django-blue --timeout=300s
+
+# Wait a few seconds then stop testing
+sleep 5
+kill $CURL_PID $PF_PID 2>/dev/null || true
+
+# Verify rolling update completion
+echo -e "\n=== CURRENT PODS ==="
+kubectl get pods -l version=blue -o wide
+
+echo -e "\n=== ROLLOUT HISTORY ==="
+kubectl rollout history deployment/django-blue
+
+echo -e "\n✅ Rolling update completed successfully!"

@@ -1,0 +1,45 @@
+#!/bin/bash
+# kubctl-0x01 - Django App Scaling and Load Testing
+
+set -e
+
+# Scale deployment to 3 replicas
+kubectl scale deployment django-messaging-app --replicas=3
+
+# Wait for pods to be ready
+kubectl wait --for=condition=Ready pods -l app=django-messaging --timeout=120s
+
+# Verify multiple pods running
+echo "=== PODS ==="
+kubectl get pods -l app=django-messaging
+
+# Install wrk if not present
+command -v wrk >/dev/null || {
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        sudo apt-get update && sudo apt-get install -y wrk
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        brew install wrk
+    else
+        echo "Install wrk manually: https://github.com/wg/wrk"
+        exit 1
+    fi
+}
+
+# Start port-forward in background
+kubectl port-forward svc/django-messaging-service 8080:80 &
+PF_PID=$!
+sleep 5
+
+# Run load test
+echo -e "\n=== LOAD TEST ==="
+wrk -t4 -c50 -d30s http://localhost:8080/
+
+# Monitor resource usage
+echo -e "\n=== RESOURCE USAGE ==="
+kubectl top nodes 2>/dev/null || echo "Metrics server not available"
+kubectl top pods -l app=django-messaging 2>/dev/null || echo "Pod metrics not available"
+
+# Cleanup
+kill $PF_PID 2>/dev/null || true
+
+echo -e "\n✅ Scaling and load testing completed!"
