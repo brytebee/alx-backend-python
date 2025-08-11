@@ -1,0 +1,258 @@
+#!/bin/bash
+
+# kurbeScript - Kubernetes Local Setup and Management Script
+# Author: unknown
+# Description: Sets up Minikube, starts Kubernetes cluster, and verifies setup
+
+set -e  # Exit on any error
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Function to install Minikube on different platforms
+install_minikube() {
+    print_status "Installing Minikube..."
+    
+    # Detect OS
+    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+    ARCH=$(uname -m)
+    
+    case $ARCH in
+        x86_64) ARCH="amd64" ;;
+        aarch64|arm64) ARCH="arm64" ;;
+        *) print_error "Unsupported architecture: $ARCH"; exit 1 ;;
+    esac
+    
+    case $OS in
+        linux)
+            curl -LO "https://storage.googleapis.com/minikube/releases/latest/minikube-linux-${ARCH}"
+            sudo install minikube-linux-${ARCH} /usr/local/bin/minikube
+            rm minikube-linux-${ARCH}
+            ;;
+        darwin)
+            if command_exists brew; then
+                brew install minikube
+            else
+                curl -LO "https://storage.googleapis.com/minikube/releases/latest/minikube-darwin-${ARCH}"
+                sudo install minikube-darwin-${ARCH} /usr/local/bin/minikube
+                rm minikube-darwin-${ARCH}
+            fi
+            ;;
+        *)
+            print_error "Unsupported OS: $OS"
+            print_status "Please install Minikube manually from: https://minikube.sigs.k8s.io/docs/start/"
+            exit 1
+            ;;
+    esac
+    
+    print_success "Minikube installed successfully!"
+}
+
+# Function to install kubectl if not present
+install_kubectl() {
+    print_status "Installing kubectl..."
+    
+    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+    ARCH=$(uname -m)
+    
+    case $ARCH in
+        x86_64) ARCH="amd64" ;;
+        aarch64|arm64) ARCH="arm64" ;;
+        *) print_error "Unsupported architecture: $ARCH"; exit 1 ;;
+    esac
+    
+    case $OS in
+        linux)
+            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${ARCH}/kubectl"
+            sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+            rm kubectl
+            ;;
+        darwin)
+            if command_exists brew; then
+                brew install kubectl
+            else
+                curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/darwin/${ARCH}/kubectl"
+                sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+                rm kubectl
+            fi
+            ;;
+        *)
+            print_error "Unsupported OS: $OS"
+            exit 1
+            ;;
+    esac
+    
+    print_success "kubectl installed successfully!"
+}
+
+# Function to check prerequisites
+check_prerequisites() {
+    print_status "Checking prerequisites..."
+    
+    # Check if kubectl is installed
+    if ! command_exists kubectl; then
+        print_warning "kubectl not found. Installing..."
+        install_kubectl
+    else
+        print_success "kubectl is already installed"
+    fi
+    
+    # Check if minikube is installed
+    if ! command_exists minikube; then
+        print_warning "Minikube not found. Installing..."
+        install_minikube
+    else
+        print_success "Minikube is already installed"
+    fi
+    
+    # Check for virtualization support (optional but recommended)
+    if command_exists docker; then
+        print_success "Docker found - can use as Minikube driver"
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        if command_exists kvm2 || ls /dev/kvm &> /dev/null; then
+            print_success "KVM support detected"
+        else
+            print_warning "No virtualization driver detected. Minikube will use 'none' driver."
+        fi
+    fi
+}
+
+# Function to start Minikube cluster
+start_cluster() {
+    print_status "Starting Kubernetes cluster with Minikube..."
+    
+    # Check if minikube is already running
+    if minikube status &> /dev/null; then
+        print_warning "Minikube cluster is already running"
+        return 0
+    fi
+    
+    # Start minikube with appropriate driver
+    if command_exists docker && docker info &> /dev/null; then
+        print_status "Using Docker driver for Minikube..."
+        minikube start --driver=docker
+    else
+        print_status "Starting Minikube with default driver..."
+        minikube start
+    fi
+    
+    print_success "Kubernetes cluster started successfully!"
+}
+
+# Function to verify cluster is running
+verify_cluster() {
+    print_status "Verifying that the cluster is running..."
+    
+    # Wait for cluster to be ready
+    print_status "Waiting for cluster to be ready..."
+    kubectl wait --for=condition=Ready nodes --all --timeout=300s
+    
+    # Display cluster info
+    print_status "Cluster information:"
+    kubectl cluster-info
+    
+    # Verify nodes are ready
+    print_status "Node status:"
+    kubectl get nodes -o wide
+    
+    print_success "Cluster verification completed!"
+}
+
+# Function to retrieve available pods
+get_pods() {
+    print_status "Retrieving available pods..."
+    
+    # Get pods from all namespaces
+    print_status "Pods in all namespaces:"
+    kubectl get pods --all-namespaces -o wide
+    
+    # Get pods in default namespace specifically
+    print_status "Pods in default namespace:"
+    kubectl get pods -o wide
+    
+    # If no pods in default namespace, show system pods
+    POD_COUNT=$(kubectl get pods --no-headers 2>/dev/null | wc -l)
+    if [ "$POD_COUNT" -eq 0 ]; then
+        print_warning "No pods found in default namespace. This is normal for a fresh cluster."
+        print_status "System pods are running in kube-system namespace:"
+        kubectl get pods -n kube-system
+    fi
+}
+
+# Function to display helpful information
+show_info() {
+    print_success "Setup completed! Here are some useful commands:"
+    echo
+    echo "Basic kubectl commands:"
+    echo "  kubectl get nodes              # List cluster nodes"
+    echo "  kubectl get pods               # List pods in default namespace"
+    echo "  kubectl get pods --all-namespaces  # List all pods"
+    echo "  kubectl get services           # List services"
+    echo "  kubectl create deployment nginx --image=nginx  # Create a sample deployment"
+    echo
+    echo "Minikube specific commands:"
+    echo "  minikube status               # Check cluster status"
+    echo "  minikube dashboard            # Open Kubernetes dashboard"
+    echo "  minikube stop                 # Stop the cluster"
+    echo "  minikube delete               # Delete the cluster"
+    echo "  minikube ip                   # Get cluster IP"
+    echo
+    echo "To stop the cluster later, run: minikube stop"
+    echo "To delete the cluster, run: minikube delete"
+}
+
+# Main execution
+main() {
+    echo "=================================================="
+    echo "    Kubernetes Local Setup Script (kurbeScript)"
+    echo "=================================================="
+    echo
+    
+    # Check prerequisites and install if needed
+    check_prerequisites
+    echo
+    
+    # Start the cluster
+    start_cluster
+    echo
+    
+    # Verify the cluster is running
+    verify_cluster
+    echo
+    
+    # Get available pods
+    get_pods
+    echo
+    
+    # Show helpful information
+    show_info
+}
+
+# Run the main function
+main "$@"
