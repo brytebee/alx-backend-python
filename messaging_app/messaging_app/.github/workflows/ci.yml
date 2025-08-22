@@ -1,0 +1,89 @@
+name: Django CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: test_db
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root -prootpassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    env:
+      DATABASE_URL: mysql://test_user:test_password@127.0.0.1:3306/test_db
+      DJANGO_SETTINGS_MODULE: your_project_name.settings_test
+      SECRET_KEY: test-secret-key-for-ci
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Wait for MySQL to be ready
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mysql-client
+          for i in {1..30}; do
+            if mysql -h 127.0.0.1 -u root -prootpassword -e "SELECT 1" >/dev/null 2>&1; then
+              echo "MySQL is ready!"
+              break
+            fi
+            echo "Waiting for MySQL... Attempt $i"
+            sleep 2
+          done
+
+      - name: Create test database
+        run: |
+          mysql -h 127.0.0.1 -u root -prootpassword -e "CREATE DATABASE IF NOT EXISTS test_db;"
+          mysql -h 127.0.0.1 -u root -prootpassword -e "CREATE USER IF NOT EXISTS 'test_user'@'%' IDENTIFIED BY 'test_password';"
+          mysql -h 127.0.0.1 -u root -prootpassword -e "GRANT ALL PRIVILEGES ON test_db.* TO 'test_user'@'%';"
+          mysql -h 127.0.0.1 -u root -prootpassword -e "FLUSH PRIVILEGES;"
+
+      - name: Run migrations
+        run: |
+          python manage.py migrate --settings=your_project_name.settings_test
+
+      - name: Run tests
+        run: |
+          python manage.py test --settings=your_project_name.settings_test --noinput -v 2
+
+      - name: Run pytest with coverage (optional)
+        run: |
+          pip install pytest pytest-django
+          pytest --junitxml=test-results.xml -v
+        if: always()
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results.xml
+        if: always()
