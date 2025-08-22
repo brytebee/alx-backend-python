@@ -1,0 +1,142 @@
+name: Django CI with Docker Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: test_db
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root -prootpassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    env:
+      DATABASE_URL: mysql://test_user:test_password@127.0.0.1:3306/test_db
+      DJANGO_SETTINGS_MODULE: your_project_name.settings_test
+      SECRET_KEY: test-secret-key-for-ci
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 coverage pytest-cov
+
+      - name: Run flake8 linting
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Wait for MySQL to be ready
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mysql-client
+          for i in {1..30}; do
+            if mysql -h 127.0.0.1 -u root -prootpassword -e "SELECT 1" >/dev/null 2>&1; then
+              echo "MySQL is ready!"
+              break
+            fi
+            echo "Waiting for MySQL... Attempt $i"
+            sleep 2
+          done
+
+      - name: Create test database
+        run: |
+          mysql -h 127.0.0.1 -u root -prootpassword -e "CREATE DATABASE IF NOT EXISTS test_db;"
+          mysql -h 127.0.0.1 -u root -prootpassword -e "CREATE USER IF NOT EXISTS 'test_user'@'%' IDENTIFIED BY 'test_password';"
+          mysql -h 127.0.0.1 -u root -prootpassword -e "GRANT ALL PRIVILEGES ON test_db.* TO 'test_user'@'%';"
+          mysql -h 127.0.0.1 -u root -prootpassword -e "FLUSH PRIVILEGES;"
+
+      - name: Run migrations
+        run: |
+          python manage.py migrate --settings=your_project_name.settings_test
+
+      - name: Run tests with coverage
+        run: |
+          coverage run --source='.' -m pytest --junitxml=test-results.xml -v
+          coverage report -m
+          coverage xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results.xml
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/messaging-app
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=,suffix=,format=long
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
