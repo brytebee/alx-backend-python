@@ -4,20 +4,25 @@ pipeline {
     tools {
         python "Python3"
     }
-    
+
+    environment {
+        DOCKER_IMAGE = 'brytebee/messaging_app:0.1'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+    }
+
     stages {
         stage('Checkout') {
             steps {
                 git branch: 'main', 
                     credentialsId: 'github-credentials', 
-                    url: 'https://github.com/your-username/your-repo.git'
+                    url: 'https://github.com/brytebee/alx-backend-python.git'
             }
         }
         
         stage('Install Dependencies') {
             steps {
                 dir('messaging_app') {
-                    sh 'pip3 install -r messaging_app/requirements.txt'
+                    sh 'pip3 install -r requirements.txt'
                 }
             }
         }
@@ -34,11 +39,32 @@ pipeline {
                 }
             }
         }
+        
+        stage('Build Docker Image') {
+            steps {
+                dir('messaging_app') {
+                    sh "docker build -t ${env.DOCKER_IMAGE} ."
+                }
+            }
+        }
+        
+        stage('Login to Docker Hub') {
+            steps {
+                sh "echo ${env.DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${env.DOCKERHUB_CREDENTIALS_USR} --password-stdin"
+            }
+        }
+        
+        stage('Push Docker Image') {
+            steps {
+                sh "docker push ${env.DOCKER_IMAGE}"
+            }
+        }
     }
     
     post {
         always {
-            echo 'Pipeline completed - messaging app tests executed'
+            echo 'Pipeline completed - Docker image built and pushed successfully'
+            sh 'docker logout'
         }
     }
 }
