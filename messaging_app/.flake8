@@ -1,0 +1,15 @@
+[flake8]
+max-line-length = 127
+max-complexity = 10
+ignore = E501, W503
+exclude = 
+    migrations/,
+    __pycache__/,
+    .git,
+    .github,
+    .venv,
+    venv,
+    env,
+    staticfiles,
+    media,
+    */settings/*
